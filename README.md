@@ -1,5 +1,8 @@
 # most-active-cookie
 
+### Please install requirements.txt if you are planning to use python 2 instead of python 3.
+Usage: pip install -r requirements.txt
+
 ## Usage with Examples
 The CLI program takes two arguments: 
 - The CSV file path
