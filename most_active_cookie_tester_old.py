@@ -4,7 +4,7 @@ import csv
 import random
 import math
 
-from most_active_cookie import CookieProcessor
+from most_active_cookie_old import CookieProcessor
 from string import ascii_letters
 from random import randint
 from datetime import timezone
