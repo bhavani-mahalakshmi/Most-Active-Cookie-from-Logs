@@ -1,31 +1,21 @@
-import argparse
-import csv
-import sys
-
+import sys, argparse, csv
 
 class CookieProcessor:
-    def __init__(self):
+    def __init__(self) -> None:
         self.cookies_dict = {}
         self.count_dict = {}
 
-    def get_active_cookies(self, date):
-        most_active_cookies = set()
-        if date in self.count_dict:
-            max_occurrence = max(self.count_dict[date].keys())
-            most_active_cookies = self.count_dict[date][max_occurrence]
-            for cookie in most_active_cookies:
-                print(cookie)
-        return most_active_cookies
+    def process_file(self, file_path):
+        with open(file_path, newline='') as contents:
+            logs = csv.DictReader(contents)
+            for log in logs:
+                self.process_log(log)
 
-    def process_file(self, log_path):
-        with open(log_path, newline='') as cookie_log:
-            log_reader = csv.DictReader(cookie_log)
-            for log_row in log_reader:
-                self.process_entry(log_row)
+    def process_log(self, log):
+        cookie, date = log["cookie"], log["timestamp"]
+        date = self.process_date(date)
 
-    def process_entry(self, row):
-        cookie, date = row['cookie'], row['timestamp']
-        date = self.get_date(date)
+        #update cookie dict
         if date not in self.cookies_dict:
             self.cookies_dict[date] = {cookie: 1}
         else:
@@ -33,32 +23,45 @@ class CookieProcessor:
                 self.cookies_dict[date][cookie] = 1
             else:
                 self.cookies_dict[date][cookie] += 1
+        
+        #update count dict
         count = self.cookies_dict[date][cookie]
-
         if date not in self.count_dict:
             self.count_dict[date] = {count: set([cookie])}
         else:
             if count not in self.count_dict[date]:
                 self.count_dict[date][count] = set([cookie])
             else:
+                if count>1:
+                    self.count_dict[date][count-1].remove(cookie)
                 self.count_dict[date][count].add(cookie)
-                if count > 1:
-                    self.count_dict[date][count - 1].remove(cookie)
 
-    def get_date(self, date):
-        return date.split("T")[0]
+    def process_date(self, date):
+        date_parts = date.split("T")
+        return date_parts[0]
 
+    def find_active_cookies(self, date):
+        if date in self.count_dict:
+            max_occurence = max(self.count_dict[date].keys())
+            return set(self.count_dict[date][max_occurence])
+        return set()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
-        prog='most_active_cookie.py',
+        prog= 'most_active_cookie.py',
         description='Returns the most active cookies on a date, '
                     'given CSV consisting of cookie and timestamp',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     arg_parser.add_argument("file_path")
     arg_parser.add_argument("--date", "-d")
-    args = vars(arg_parser.parse_args(sys.argv[1:]))
-    cookie_processsor = CookieProcessor()
-    cookie_processsor.process_file(args["file_path"])
-    cookie_processsor.get_active_cookies(args["date"])
+    # arg_parser.print_help()
+    # print(arg_parser.parse_args(["test.py"]))
+    # print(arg_parser.parse_args(["test.py", "--date", "2021"]))
+    # print(arg_parser.parse_args(["test.py", "--d", "2022"]))
+    cmd_args = (sys.argv[1:])
+    args = vars(arg_parser.parse_args(cmd_args))
+    cp = CookieProcessor()
+    cp.process_file(args["file_path"])
+    active_cookies = cp.find_active_cookies(args["date"])
+    print("Most Active Cookies for the day are:", active_cookies)
